@@ -238,17 +238,21 @@ public class DeviceScanActivity
     private BluetoothAdapter.LeScanCallback mLeScanCallback =
             new BluetoothAdapter.LeScanCallback() {
                 @Override
-                public void onLeScan(final BluetoothDevice device, final int rssi, byte[] scanRecord) {
+                public void onLeScan(final BluetoothDevice device, final int rssi, final byte[] scanRecord) {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            String addr = device.getAddress();
-                            addr = addr.trim();
-                            mBluetoothUtils.storeDevice(device);
+                            BluetoothLeDevice bluetoothLeDevice = new BluetoothLeDevice();
+                            bluetoothLeDevice.setDevice(device);
+                            bluetoothLeDevice.setRSSI(rssi);
+                            mBluetoothUtils.storeDevice(bluetoothLeDevice);
 
-
-                            Log.e("DeviceScan", "Accuracy****" + getAccuracy());
-                            Log.e("DeviceScan", "Beacon descriptor****" + BeaconUtils.getDistanceDescriptor(getAccuracy()));
+                            // Parse Tx_power
+                            int txpower = scanRecord[24];
+                            Log.e("DeviceScan", "txPower****" + txpower);
+                            Log.e("DeviceScan", "Accuracy****" + getAccuracy(device.getAddress()));
+                            Log.e("DeviceScan", "Beacon descriptor****" +
+                                    BeaconUtils.getDistanceDescriptor(getAccuracy(device.getAddress())));
 
                             mLeDeviceListAdapter.addDevice(device);
                             mLeDeviceListAdapter.notifyDataSetChanged();
@@ -274,10 +278,11 @@ public class DeviceScanActivity
      * a simple running average of the last
      * samples.
      *
+     * @param address
      * @return the accuracy in meters
      */
-    public double getAccuracy() {
-        return BeaconUtils.calculateAccuracy(Constant.TX_POWER_BEACON, -59);
+    public double getAccuracy(String address) {
+        BluetoothLeDevice device = mBluetoothUtils.getDeviceMap().get(address);
+        return BeaconUtils.calculateAccuracy(Constant.TX_POWER_BEACON, (device.getRSSI() / device.getmRSSICount()));
     }
-
 }

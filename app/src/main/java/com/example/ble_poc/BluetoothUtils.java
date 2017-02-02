@@ -2,7 +2,6 @@ package com.example.ble_poc;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.Intent;
@@ -19,13 +18,13 @@ public final class BluetoothUtils {
     public final static int REQUEST_ENABLE_BT = 2001;
     private final Activity mActivity;
     private final BluetoothAdapter mBluetoothAdapter;
-    private Map<String, BluetoothDevice> mDeviceMap;
+    private Map<String, BluetoothLeDevice> mDeviceMap;
 
     public BluetoothUtils(final Activity activity) {
         mActivity = activity;
         final BluetoothManager bluetoothManager = (BluetoothManager) mActivity.getSystemService(Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = bluetoothManager.getAdapter();
-        mDeviceMap = new HashMap<String, BluetoothDevice>();
+        mDeviceMap = new HashMap<String, BluetoothLeDevice>();
     }
 
     public void askUserToEnableBluetoothIfNeeded() {
@@ -51,9 +50,16 @@ public final class BluetoothUtils {
         }
     }
 
-    public void storeDevice(BluetoothDevice device) {
-        if (!mDeviceMap.containsKey(device.getAddress())) {
-            mDeviceMap.put(device.getAddress(), device);
+    public void storeDevice(BluetoothLeDevice device) {
+        if (mDeviceMap.containsKey(device.getDevice().getAddress())) {
+            mDeviceMap.get(device.getDevice().getAddress()).updateRSSIcount();
+            mDeviceMap.get(device.getDevice().getAddress()).addRSSIValue(device.getRSSI());
+        } else {
+            mDeviceMap.put(device.getDevice().getAddress(), device);
         }
+    }
+
+    public Map<String, BluetoothLeDevice> getDeviceMap() {
+        return mDeviceMap;
     }
 }
